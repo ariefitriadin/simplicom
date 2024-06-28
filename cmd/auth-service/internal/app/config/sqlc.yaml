@@ -1,0 +1,24 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "../../../migrations"
+    queries: "../../persistence/postgres/queries"
+    gen:
+      go:
+        out: "../../persistence/postgres/repositories"
+        emit_json_tags: true
+        json_tags_case_style: "camel"
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_exact_table_names: false
+        emit_empty_slices: true
+        package: "pgrepo"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "jsonb"
+            go_type:
+              type: "[]string"

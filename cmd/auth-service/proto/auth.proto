@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package authService;
+option go_package = ".;authService";
+
+import "google/protobuf/empty.proto";
+
+service AuthService {
+    rpc Register (RegisterRequest) returns (RegisterResponse);
+    rpc Login (LoginRequest) returns (LoginResponse);
+    rpc ValidationBearerToken (ValidationBearerTokenRequest) returns (google.protobuf.Empty);
+    rpc CreateClient (CreateClientRequest) returns (CreateClientResponse);
+}
+
+message RegisterRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+    string message = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+// ValidationBearerTokenRequest validates auth token
+message ValidationBearerTokenRequest {
+  string token = 1;
+}
+
+message CreateClientRequest {
+    string redirect_uri = 1;
+    string domain = 2;
+}
+
+message CreateClientResponse {
+    string message = 1;
+}
