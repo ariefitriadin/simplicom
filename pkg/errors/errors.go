@@ -14,6 +14,7 @@ var (
 	ErrUnauthorized      = errors.New("access denied")
 	ErrForbidden         = errors.New("forbidden")
 	ErrNotFound          = errors.New("not found")
+	ErrNoRows            = errors.New("no rows in result set")
 	ErrInternal          = errors.New("internal system error")
 	ErrTemporaryDisabled = errors.New("temporary disabled")
 	ErrTimeout           = errors.New("timeout")

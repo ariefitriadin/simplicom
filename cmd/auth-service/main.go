@@ -10,7 +10,6 @@ import (
 
 	"github.com/ariefitriadin/simplicom/pkg/application"
 	httputils "github.com/ariefitriadin/simplicom/pkg/http"
-	"github.com/ariefitriadin/simplicom/pkg/postgres"
 
 	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/services"
 	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/services/oauth2"
@@ -60,13 +59,7 @@ func main() {
 
 	oauth2Server := oauth2.InitServer(cfg, container.OAuth2Manager, cfg.OAuth.InitTimeout, container.PersistenceQuery)
 
-	grpcAuthServer := authgrpc.NewServer(oauth2Server, postgres.NewConnection(ctx, postgres.ConnectionConfig{
-		Host:     cfg.POSTGRES.Host,
-		Port:     cfg.POSTGRES.Port,
-		User:     cfg.POSTGRES.User,
-		Pass:     cfg.POSTGRES.Pass,
-		Database: cfg.POSTGRES.Database,
-	}))
+	grpcAuthServer := authgrpc.NewServer(oauth2Server, container.Authenticator, container.SQL)
 
 	router := authhttp.NewRouter(
 		container.DB,

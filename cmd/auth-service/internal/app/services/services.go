@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	pgrepo "github.com/ariefitriadin/simplicom/cmd/auth-service/internal/persistence/postgres/repositories"
 	"sync"
 	"time"
 
+	pgrepo "github.com/ariefitriadin/simplicom/cmd/auth-service/internal/persistence/postgres/repositories"
+
 	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/config"
 	"github.com/ariefitriadin/simplicom/pkg/auth"
+	authutils "github.com/ariefitriadin/simplicom/pkg/auth"
+	"github.com/ariefitriadin/simplicom/pkg/postgres"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
@@ -26,7 +29,17 @@ type ServiceContainer struct {
 }
 
 func NewServiceContainer(ctx context.Context, cfg *config.Config) (*ServiceContainer, error) {
-	return &ServiceContainer{}, nil
+	authenticator := authutils.NewSecretAuthenticator([]byte(cfg.App.Secret))
+	return &ServiceContainer{
+		Authenticator: authenticator,
+		SQL: postgres.NewConnection(ctx, postgres.ConnectionConfig{
+			Host:     cfg.POSTGRES.Host,
+			Port:     cfg.POSTGRES.Port,
+			User:     cfg.POSTGRES.User,
+			Pass:     cfg.POSTGRES.Pass,
+			Database: cfg.POSTGRES.Database,
+		}),
+	}, nil
 }
 
 func (sc *ServiceContainer) Close() error {

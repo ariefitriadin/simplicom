@@ -40,6 +40,6 @@ type User struct {
 	ID        uuid.UUID        `json:"id"`
 	Email     string           `json:"email"`
 	Phone     string           `json:"phone"`
+	Password  string           `json:"password"`
 	Role      int16            `json:"role"`
-	GoogleID  pgtype.Text      `json:"googleId"`
 }

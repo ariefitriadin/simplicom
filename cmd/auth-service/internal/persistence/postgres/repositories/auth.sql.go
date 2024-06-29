@@ -70,26 +70,6 @@ func (q *Queries) DeleteClientByID(ctx context.Context, clientID uuid.UUID) erro
 	return err
 }
 
-const deleteTokenByAccess = `-- name: DeleteTokenByAccess :exec
-DELETE FROM oauth2_tokens
-WHERE access_token = $1
-`
-
-func (q *Queries) DeleteTokenByAccess(ctx context.Context, accessToken string) error {
-	_, err := q.db.Exec(ctx, deleteTokenByAccess, accessToken)
-	return err
-}
-
-const deleteTokenByRefresh = `-- name: DeleteTokenByRefresh :exec
-DELETE FROM oauth2_tokens
-WHERE refresh_token = $1
-`
-
-func (q *Queries) DeleteTokenByRefresh(ctx context.Context, refreshToken pgtype.Text) error {
-	_, err := q.db.Exec(ctx, deleteTokenByRefresh, refreshToken)
-	return err
-}
-
 const getClientByID = `-- name: GetClientByID :one
 SELECT id, client_id, client_secret, domain, scope, redirect_url
 FROM oauth2_clients
@@ -117,6 +97,20 @@ func (q *Queries) GetClientByID(ctx context.Context, clientID uuid.UUID) (GetCli
 		&i.RedirectUrl,
 	)
 	return i, err
+}
+
+const getClientIdByUserId = `-- name: GetClientIdByUserId :one
+SELECT a.client_id
+FROM oauth2_clients a
+JOIN oauth2_tokens b ON a.client_id = b.client_id
+WHERE b.user_id = $1
+`
+
+func (q *Queries) GetClientIdByUserId(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getClientIdByUserId, userID)
+	var client_id uuid.UUID
+	err := row.Scan(&client_id)
+	return client_id, err
 }
 
 const getScopeByClientID = `-- name: GetScopeByClientID :one
@@ -170,4 +164,21 @@ func (q *Queries) GetTokenByRefresh(ctx context.Context, refreshToken pgtype.Tex
 		&i.UserID,
 	)
 	return i, err
+}
+
+const updateTokenByUserID = `-- name: UpdateTokenByUserID :exec
+UPDATE oauth2_tokens
+SET access_token = $1, expires_at = $2
+WHERE user_id = $3
+`
+
+type UpdateTokenByUserIDParams struct {
+	AccessToken string           `json:"accessToken"`
+	ExpiresAt   pgtype.Timestamp `json:"expiresAt"`
+	UserID      uuid.UUID        `json:"userId"`
+}
+
+func (q *Queries) UpdateTokenByUserID(ctx context.Context, arg UpdateTokenByUserIDParams) error {
+	_, err := q.db.Exec(ctx, updateTokenByUserID, arg.AccessToken, arg.ExpiresAt, arg.UserID)
+	return err
 }

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/golang-jwt/jwt"
+	"github.com/dgrijalva/jwt-go"
 
 	apperrors "github.com/ariefitriadin/simplicom/pkg/errors"
 )

@@ -42,7 +42,7 @@ type Config struct {
 		Port     int    `env:"MYSQL_PORT"     envDefault:"5432"`
 		User     string `env:"MYSQL_USER"     envDefault:"user"`
 		Pass     string `env:"MYSQL_PASS"     envDefault:"secret"`
-		Database string `env:"MYSQL_DATABASE" envDefault:"auth"`
+		Database string `env:"MYSQL_DATABASE" envDefault:"authdb"`
 	}
 	Debug struct {
 		Host string `env:"DEBUG_HOST" envDefault:"0.0.0.0"`

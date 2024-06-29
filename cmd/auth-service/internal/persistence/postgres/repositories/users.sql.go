@@ -9,20 +9,19 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, email, phone, role, google_id)
+INSERT INTO users (id, email, phone, role, password)
 VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateUserParams struct {
-	ID       uuid.UUID   `json:"id"`
-	Email    string      `json:"email"`
-	Phone    string      `json:"phone"`
-	Role     int16       `json:"role"`
-	GoogleID pgtype.Text `json:"googleId"`
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Phone    string    `json:"phone"`
+	Role     int16     `json:"role"`
+	Password string    `json:"password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -31,61 +30,61 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.Email,
 		arg.Phone,
 		arg.Role,
-		arg.GoogleID,
+		arg.Password,
 	)
 	return err
 }
 
-const findByEmail = `-- name: FindByEmail :one
-SELECT id, email, phone, role, google_id
+const findUserByEmail = `-- name: FindUserByEmail :one
+SELECT id, email, phone, role, password
 FROM users
 WHERE email = $1
 `
 
-type FindByEmailRow struct {
-	ID       uuid.UUID   `json:"id"`
-	Email    string      `json:"email"`
-	Phone    string      `json:"phone"`
-	Role     int16       `json:"role"`
-	GoogleID pgtype.Text `json:"googleId"`
+type FindUserByEmailRow struct {
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Phone    string    `json:"phone"`
+	Role     int16     `json:"role"`
+	Password string    `json:"password"`
 }
 
-func (q *Queries) FindByEmail(ctx context.Context, email string) (FindByEmailRow, error) {
-	row := q.db.QueryRow(ctx, findByEmail, email)
-	var i FindByEmailRow
+func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, findUserByEmail, email)
+	var i FindUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Phone,
 		&i.Role,
-		&i.GoogleID,
+		&i.Password,
 	)
 	return i, err
 }
 
-const findByPhone = `-- name: FindByPhone :one
-SELECT id, email, phone, role, google_id
+const findUserByPhone = `-- name: FindUserByPhone :one
+SELECT id, email, phone, role, password
 FROM users
 WHERE phone = $1
 `
 
-type FindByPhoneRow struct {
-	ID       uuid.UUID   `json:"id"`
-	Email    string      `json:"email"`
-	Phone    string      `json:"phone"`
-	Role     int16       `json:"role"`
-	GoogleID pgtype.Text `json:"googleId"`
+type FindUserByPhoneRow struct {
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Phone    string    `json:"phone"`
+	Role     int16     `json:"role"`
+	Password string    `json:"password"`
 }
 
-func (q *Queries) FindByPhone(ctx context.Context, phone string) (FindByPhoneRow, error) {
-	row := q.db.QueryRow(ctx, findByPhone, phone)
-	var i FindByPhoneRow
+func (q *Queries) FindUserByPhone(ctx context.Context, phone string) (FindUserByPhoneRow, error) {
+	row := q.db.QueryRow(ctx, findUserByPhone, phone)
+	var i FindUserByPhoneRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Phone,
 		&i.Role,
-		&i.GoogleID,
+		&i.Password,
 	)
 	return i, err
 }

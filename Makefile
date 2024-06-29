@@ -15,10 +15,14 @@ help:
 version: ## Show version
 	@echo $(VERSION) \(git commit: $(GIT_COMMIT)\)
 
-migration-auth: ## Run migrations Auth Service
+sqlc-auth-gen:
 	@echo "Running migrations Auth Service"
-	dbmate -d cmd/auth-service/migrations up
+	sqlc -f cmd/auth-service/internal/app/config/sqlc.yaml generate
+
+migration-auth: ## Run migrations Auth Service
+	@echo "Running migrations Auth Service, example: make migration-auth OP=up, or OP=down"
+	dbmate -d cmd/auth-service/migrations ${OP}
 
 migration-user: ## Run migrations User Service
 	@echo "Running migrations Order Service"
-	dbmate -d cmd/order-service/migrations up
+	dbmate -d cmd/order-service/migrations ${OP}
