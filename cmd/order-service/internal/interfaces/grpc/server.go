@@ -93,28 +93,39 @@ func (s *OrderServer) UpdateOrder(ctx context.Context, req *proto.UpdateOrderReq
 	defer tx.Rollback(ctx)
 
 	orderPayload := req.GetOrder()
+
+	// Check if the order exists
+	existingOrder, err := s.queries.WithTx(tx).GetOrder(ctx, uuid.MustParse(orderPayload.Id))
+	if err != nil {
+		if err.Error() == apperrors.ErrNoRows.Error() {
+			return nil, apperrors.New("order not found")
+		}
+		return nil, apperrors.Wrap(err)
+	}
+
+	// Update the order
 	order, err := s.queries.WithTx(tx).UpdateOrder(ctx, pgrepo.UpdateOrderParams{
-		ID:         uuid.MustParse(orderPayload.Id),
-		CustomerID: orderPayload.CustomerId,
-		OrderDate:  pgtype.Timestamp{Time: orderPayload.OrderDate.AsTime(), Valid: true},
-		Status:     orderPayload.Status,
-		Total:      pgtype.Numeric{Int: big.NewInt(int64(orderPayload.Total)), Valid: true},
+		ID:     existingOrder.ID,
+		Status: orderPayload.Status,
+		Total:  pgtype.Numeric{Int: big.NewInt(int64(orderPayload.Total)), Valid: true},
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
+	var orderItems pgrepo.UpdateOrderItemsParams
 	for _, item := range orderPayload.Items {
-		_, err := s.queries.WithTx(tx).UpdateOrderItem(ctx, pgrepo.UpdateOrderItemParams{
-			ID:        uuid.MustParse(item.Id),
-			OrderID:   uuid.MustParse(orderPayload.Id),
-			ProductID: item.ProductId,
-			Quantity:  item.Quantity,
-			Price:     pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true},
-		})
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
+		orderItems.Column1 = append(orderItems.Column1, uuid.MustParse(item.Id))
+		orderItems.Column2 = append(orderItems.Column2, existingOrder.ID)
+		orderItems.Column3 = append(orderItems.Column3, item.ProductId)
+		orderItems.Column4 = append(orderItems.Column4, item.Quantity)
+		orderItems.Column5 = append(orderItems.Column5, pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true})
+	}
+
+	// Execute bulk update using UNNEST
+	err = s.queries.WithTx(tx).UpdateOrderItems(ctx, orderItems)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = tx.Commit(ctx)
@@ -129,11 +140,10 @@ func (s *OrderServer) UpdateOrder(ctx context.Context, req *proto.UpdateOrderReq
 
 	return &proto.UpdateOrderResponse{
 		Order: &proto.Order{
-			Id:         order.ID.String(),
-			CustomerId: order.CustomerID.String(),
-			OrderDate:  timestamppb.New(order.OrderDate.Time),
-			Status:     order.Status,
-			Total:      orderTotal.Float64,
+			Id:        order.ID.String(),
+			OrderDate: timestamppb.New(order.OrderDate.Time),
+			Status:    order.Status,
+			Total:     orderTotal.Float64,
 		},
 	}, nil
 }

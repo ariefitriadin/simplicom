@@ -12,6 +12,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getOrder = `-- name: GetOrder :one
+SELECT createdat, updatedat, deletedat, id, customer_id, order_date, status, total FROM orders WHERE id = $1
+`
+
+func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrder, id)
+	var i Order
+	err := row.Scan(
+		&i.Createdat,
+		&i.Updatedat,
+		&i.Deletedat,
+		&i.ID,
+		&i.CustomerID,
+		&i.OrderDate,
+		&i.Status,
+		&i.Total,
+	)
+	return i, err
+}
+
 const getOrders = `-- name: GetOrders :many
 SELECT 
     o.id AS order_id,
@@ -171,27 +191,39 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Updat
 	return i, err
 }
 
-const updateOrderItem = `-- name: UpdateOrderItem :exec
-UPDATE order_items
-SET product_id = $3, quantity = $4, price = $5
-WHERE id = $1 AND order_id = $2
+const updateOrderItems = `-- name: UpdateOrderItems :exec
+WITH updates AS (
+    SELECT 
+        unnest($1::uuid[]) AS id,
+        unnest($2::uuid[]) AS order_id,
+        unnest($3::int[]) AS product_id,
+        unnest($4::int[]) AS quantity,
+        unnest($5::numeric[]) AS price
+)
+UPDATE order_items oi
+SET 
+    product_id = u.product_id,
+    quantity = u.quantity,
+    price = u.price
+FROM updates u
+WHERE oi.id = u.id AND oi.order_id = u.order_id
 `
 
-type UpdateOrderItemParams struct {
-	ID        int32          `json:"id"`
-	OrderID   uuid.UUID      `json:"orderId"`
-	ProductID int32          `json:"productId"`
-	Quantity  int32          `json:"quantity"`
-	Price     pgtype.Numeric `json:"price"`
+type UpdateOrderItemsParams struct {
+	Column1 []uuid.UUID      `json:"column1"`
+	Column2 []uuid.UUID      `json:"column2"`
+	Column3 []int32          `json:"column3"`
+	Column4 []int32          `json:"column4"`
+	Column5 []pgtype.Numeric `json:"column5"`
 }
 
-func (q *Queries) UpdateOrderItem(ctx context.Context, arg UpdateOrderItemParams) error {
-	_, err := q.db.Exec(ctx, updateOrderItem,
-		arg.ID,
-		arg.OrderID,
-		arg.ProductID,
-		arg.Quantity,
-		arg.Price,
+func (q *Queries) UpdateOrderItems(ctx context.Context, arg UpdateOrderItemsParams) error {
+	_, err := q.db.Exec(ctx, updateOrderItems,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
 	)
 	return err
 }

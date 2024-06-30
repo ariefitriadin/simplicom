@@ -13,6 +13,9 @@ FROM orders o
 JOIN order_items oi ON o.id = oi.order_id
 WHERE o.id = $1;
 
+-- name: GetOrder :one
+SELECT * FROM orders WHERE id = $1;
+
 -- name: InsertOrder :one
 INSERT INTO orders (id, customer_id, order_date, status, total)
 VALUES ($1, $2, $3, $4, $5)
@@ -32,7 +35,19 @@ SET status = $2, total = $3
 WHERE id = $1
 RETURNING id, customer_id, order_date, status, total;
 
--- name: UpdateOrderItem :exec
-UPDATE order_items
-SET product_id = $3, quantity = $4, price = $5
-WHERE id = $1 AND order_id = $2;
+-- name: UpdateOrderItems :exec
+WITH updates AS (
+    SELECT 
+        unnest($1::uuid[]) AS id,
+        unnest($2::uuid[]) AS order_id,
+        unnest($3::int[]) AS product_id,
+        unnest($4::int[]) AS quantity,
+        unnest($5::numeric[]) AS price
+)
+UPDATE order_items oi
+SET 
+    product_id = u.product_id,
+    quantity = u.quantity,
+    price = u.price
+FROM updates u
+WHERE oi.id = u.id AND oi.order_id = u.order_id;
