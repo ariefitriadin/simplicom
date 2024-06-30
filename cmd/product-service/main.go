@@ -6,23 +6,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/config"
-
+	"github.com/ariefitriadin/simplicom/cmd/product-service/internal/app/config"
+	"github.com/ariefitriadin/simplicom/cmd/product-service/internal/app/services"
 	"github.com/ariefitriadin/simplicom/pkg/application"
-	httputils "github.com/ariefitriadin/simplicom/pkg/http"
-
-	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/services"
-	"github.com/ariefitriadin/simplicom/cmd/auth-service/internal/app/services/oauth2"
-	authgrpc "github.com/ariefitriadin/simplicom/cmd/auth-service/internal/interfaces/grpc"
-	authhttp "github.com/ariefitriadin/simplicom/cmd/auth-service/internal/interfaces/http"
-	authproto "github.com/ariefitriadin/simplicom/cmd/auth-service/proto"
 	"github.com/ariefitriadin/simplicom/pkg/buildinfo"
 	grpcutils "github.com/ariefitriadin/simplicom/pkg/grpc"
 	"github.com/ariefitriadin/simplicom/pkg/grpc/middleware"
+	httputils "github.com/ariefitriadin/simplicom/pkg/http"
 	"github.com/vardius/gocontainer"
+	"golang.org/x/exp/rand"
 	"google.golang.org/grpc"
 
-	"golang.org/x/exp/rand"
+	prodgrpc "github.com/ariefitriadin/simplicom/cmd/product-service/internal/interfaces/grpc"
+	prodhttp "github.com/ariefitriadin/simplicom/cmd/product-service/internal/interfaces/http"
+	proto "github.com/ariefitriadin/simplicom/cmd/product-service/proto"
 )
 
 func init() {
@@ -36,9 +33,10 @@ func main() {
 	defer cancel()
 
 	cfg := config.FromEnv()
+
 	container, err := services.NewServiceContainer(ctx, cfg)
 	if err != nil {
-		panic(fmt.Errorf("failed to create auth service container: %w", err))
+		panic(fmt.Errorf("failed to create product service container: %w", err))
 	}
 
 	grpcServer := grpcutils.NewServer(
@@ -57,13 +55,11 @@ func main() {
 		},
 	)
 
-	oauth2Server := oauth2.InitServer(cfg, container.OAuth2Manager, cfg.OAuth.InitTimeout, container.PersistenceQuery)
+	productGrpcServer := prodgrpc.NewServer(container.PersistenceQuery, container.SQL)
 
-	grpcAuthServer := authgrpc.NewServer(oauth2Server, container.Authenticator, container.SQL)
+	proto.RegisterProductServiceServer(grpcServer, productGrpcServer)
 
-	authproto.RegisterAuthServiceServer(grpcServer, grpcAuthServer)
-
-	router := authhttp.NewRouter(
+	router := prodhttp.NewRouter(
 		container.DB,
 		map[string]*grpc.ClientConn{
 			"auth": container.AuthConn,
@@ -82,20 +78,13 @@ func main() {
 			},
 		),
 		grpcutils.NewAdapter(
-			"gRPC auth server",
+			"gRPC product server",
 			fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port),
 			grpcServer,
 		),
 	)
 
-	if cfg.App.Environment == "development" {
-		app.AddAdapters(
-			application.NewDebugAdapter(
-				fmt.Sprintf("%s:%d", cfg.Debug.Host, cfg.Debug.Port),
-			),
-		)
-	}
-
 	app.WithShutdownTimeout(cfg.App.ShutdownTimeout)
 	app.Run(ctx)
+
 }

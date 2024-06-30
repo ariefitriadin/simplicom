@@ -44,6 +44,7 @@ require (
 )
 
 require (
+	github.com/caarlos0/env/v11 v11.1.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
