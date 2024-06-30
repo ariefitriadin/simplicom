@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package orderService;
+option go_package = ".;orderService";
+
+import "google/protobuf/timestamp.proto";
+
+// Order message
+message Order {
+    string id = 1;
+    int32 customer_id = 2;
+    google.protobuf.Timestamp order_date = 3;
+    string status = 4;
+    double total = 5;
+    repeated OrderItem items = 6;
+}
+
+// OrderItem message
+message OrderItem {
+    string id = 1;
+    string order_id = 2;
+    int32 product_id = 3;
+    int32 quantity = 4;
+    double price = 5;
+}
+
+// Request and Response messages for creating an order
+message CreateOrderRequest {
+    Order order = 1;
+}
+
+message CreateOrderResponse {
+    Order order = 1;
+}
+
+// Request and Response messages for updating an order
+message UpdateOrderRequest {
+    Order order = 1;
+}
+
+message UpdateOrderResponse {
+    Order order = 1;
+}
+
+// Request and Response messages for getting an order by ID
+message GetOrderRequest {
+    string id = 1;
+}
+
+message GetOrderResponse {
+    Order order = 1;
+}
+
+// Request and Response messages for listing all orders
+message ListOrdersRequest {}
+
+message ListOrdersResponse {
+    repeated Order orders = 1;
+}
+
+// OrderService definition
+service OrderService {
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+    rpc UpdateOrder(UpdateOrderRequest) returns (UpdateOrderResponse);
+    rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+    rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+}

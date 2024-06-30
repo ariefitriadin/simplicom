@@ -27,15 +27,8 @@ func NewServer(queries *pgrepo.Queries, db *pgxpool.Pool) proto.ProductServiceSe
 
 func (s *ProductServer) CreateProduct(ctx context.Context, request *proto.CreateProductRequest) (*proto.CreateProductResponse, error) {
 
-	tx, err := s.db.Begin(ctx)
-	if err != nil {
-		logger.Error(ctx, err.Error())
-		return nil, apperrors.Wrap(err)
-	}
-	defer tx.Rollback(ctx)
-
 	// insert one product
-	product, err := s.queries.WithTx(tx).InsertProduct(ctx, pgrepo.InsertProductParams{
+	product, err := s.queries.InsertProduct(ctx, pgrepo.InsertProductParams{
 		Name:        request.Name,
 		Description: pgtype.Text{String: request.Description, Valid: true},
 		Price:       pgtype.Numeric{Int: big.NewInt(int64(request.Price)), Valid: true},
@@ -50,6 +43,7 @@ func (s *ProductServer) CreateProduct(ctx context.Context, request *proto.Create
 		logger.Error(ctx, err.Error())
 		return nil, apperrors.Wrap(err)
 	}
+
 	return &proto.CreateProductResponse{Product: &proto.Product{
 		Id:          product.ID,
 		Name:        product.Name,
@@ -96,31 +90,19 @@ func (s *ProductServer) GetProducts(ctx context.Context, request *proto.GetProdu
 
 func (s *ProductServer) UpdateProductStock(ctx context.Context, request *proto.UpdateProductStockRequest) (*proto.UpdateProductStockResponse, error) {
 
-	tx, err := s.db.Begin(ctx)
-	if err != nil {
-		logger.Error(ctx, err.Error())
-		return nil, apperrors.Wrap(err)
-	}
-	defer tx.Rollback(ctx)
-
 	//check product availability
-	product, err := s.queries.WithTx(tx).GetProductByID(ctx, request.ProductId)
+	product, err := s.queries.GetProductByID(ctx, request.ProductId)
 	if err != nil {
 		logger.Error(ctx, err.Error())
 		return nil, apperrors.Wrap(fmt.Errorf("product not found"))
 	}
 
-	err = s.queries.WithTx(tx).UpdateProductStock(ctx, pgrepo.UpdateProductStockParams{
-		ProductID:   request.ProductId,
-		StockLevel:  pgtype.Int4{Int32: request.StockLevel, Valid: true},
-		WarehouseID: request.WarehouseId,
+	err = s.queries.UpdateProductStock(ctx, pgrepo.UpdateProductStockParams{
+		ProductID:     request.ProductId,
+		StockLevel:    pgtype.Int4{Int32: request.StockLevel, Valid: true},
+		WarehouseID:   request.WarehouseId,
+		WarehouseID_2: request.WhereWhouseId,
 	})
-	if err != nil {
-		logger.Error(ctx, err.Error())
-		return nil, apperrors.Wrap(err)
-	}
-
-	err = tx.Commit(ctx)
 	if err != nil {
 		logger.Error(ctx, err.Error())
 		return nil, apperrors.Wrap(err)

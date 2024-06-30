@@ -45,6 +45,7 @@ message UpdateProductStockRequest {
     int32 productId = 1;
     int32 warehouseId = 2;
     int32 stockLevel = 3;
+    int32 whereWhouseId = 4;
 }
 
 message UpdateProductStockResponse {
