@@ -14,7 +14,7 @@ type Order struct {
 	Updatedat  pgtype.Timestamp `json:"updatedat"`
 	Deletedat  pgtype.Timestamp `json:"deletedat"`
 	ID         uuid.UUID        `json:"id"`
-	CustomerID int32            `json:"customerId"`
+	CustomerID uuid.UUID        `json:"customerId"`
 	OrderDate  pgtype.Timestamp `json:"orderDate"`
 	Status     string           `json:"status"`
 	Total      pgtype.Numeric   `json:"total"`

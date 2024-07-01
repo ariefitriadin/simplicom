@@ -38,23 +38,32 @@ func (s *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderReq
 	// Generate ULID for order ID
 	t := time.Now().UTC()
 	entropy := ulid.Monotonic(rand.New(rand.NewSource(uint64(t.UnixNano()))), 0)
-	orderID := ulid.MustNew(ulid.Timestamp(t), entropy).String()
+	orderULID := ulid.MustNew(ulid.Timestamp(t), entropy)
+
+	orderUUID, err := uuid.FromBytes(orderULID[:])
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 
 	orderPayload := req.GetOrder()
 	order, err := s.queries.WithTx(tx).InsertOrder(ctx, pgrepo.InsertOrderParams{
-		ID:         uuid.MustParse(orderID),
-		CustomerID: orderPayload.CustomerId,
+		ID:         orderUUID,
+		CustomerID: uuid.MustParse(orderPayload.CustomerId),
 		OrderDate:  pgtype.Timestamp{Time: orderPayload.OrderDate.AsTime(), Valid: true},
 		Status:     orderPayload.Status,
 		Total:      pgtype.Numeric{Int: big.NewInt(int64(orderPayload.Total)), Valid: true},
 	})
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 
 	var orderItems pgrepo.InsertOrderItemParams
 	for _, item := range orderPayload.Items {
-		orderItems.Column1 = append(orderItems.Column1, uuid.MustParse(orderID))
+		orderItems.Column1 = append(orderItems.Column1, orderUUID)
 		orderItems.Column2 = append(orderItems.Column2, item.ProductId)
-		orderItems.Column3 = append(orderItems.Column3, item.Quantity)
-		orderItems.Column4 = append(orderItems.Column4, pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true})
+		orderItems.Column3 = append(orderItems.Column3, item.ProductName)
+		orderItems.Column4 = append(orderItems.Column4, item.Quantity)
+		orderItems.Column5 = append(orderItems.Column5, pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true})
 	}
 
 	// Execute bulk insert using UNNEST
@@ -76,7 +85,7 @@ func (s *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderReq
 	return &proto.CreateOrderResponse{
 		Order: &proto.Order{
 			Id:         order.ID.String(),
-			CustomerId: order.CustomerID,
+			CustomerId: order.CustomerID.String(),
 			OrderDate:  timestamppb.New(order.OrderDate.Time),
 			Status:     order.Status,
 			Total:      orderTotal.Float64,
@@ -118,8 +127,9 @@ func (s *OrderServer) UpdateOrder(ctx context.Context, req *proto.UpdateOrderReq
 		orderItems.Column1 = append(orderItems.Column1, uuid.MustParse(item.Id))
 		orderItems.Column2 = append(orderItems.Column2, existingOrder.ID)
 		orderItems.Column3 = append(orderItems.Column3, item.ProductId)
-		orderItems.Column4 = append(orderItems.Column4, item.Quantity)
-		orderItems.Column5 = append(orderItems.Column5, pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true})
+		orderItems.Column4 = append(orderItems.Column4, item.ProductName)
+		orderItems.Column5 = append(orderItems.Column5, item.Quantity)
+		orderItems.Column6 = append(orderItems.Column6, pgtype.Numeric{Int: big.NewInt(int64(item.Price)), Valid: true})
 	}
 
 	// Execute bulk update using UNNEST

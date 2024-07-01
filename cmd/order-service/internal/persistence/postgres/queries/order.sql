@@ -22,12 +22,13 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING id, customer_id, order_date, status, total;
 
 -- name: InsertOrderItem :exec
-INSERT INTO order_items (order_id, product_id, quantity, price)
+INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
 SELECT 
     unnest($1::uuid[]), 
     unnest($2::int[]), 
-    unnest($3::int[]), 
-    unnest($4::numeric[]);
+    unnest($3::text[]),
+    unnest($4::int[]), 
+    unnest($5::numeric[]);
 
 -- name: UpdateOrder :one
 UPDATE orders
@@ -41,12 +42,14 @@ WITH updates AS (
         unnest($1::uuid[]) AS id,
         unnest($2::uuid[]) AS order_id,
         unnest($3::int[]) AS product_id,
-        unnest($4::int[]) AS quantity,
-        unnest($5::numeric[]) AS price
+        unnest($4::text[]) AS product_name,
+        unnest($5::int[]) AS quantity,
+        unnest($6::numeric[]) AS price
 )
 UPDATE order_items oi
 SET 
     product_id = u.product_id,
+    product_name = u.product_name,
     quantity = u.quantity,
     price = u.price
 FROM updates u

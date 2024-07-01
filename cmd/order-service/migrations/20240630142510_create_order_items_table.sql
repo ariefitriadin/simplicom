@@ -4,7 +4,7 @@
 CREATE TABLE order_items (
     LIKE template_table INCLUDING ALL,
     id SERIAL PRIMARY KEY,
-    order_id UUID NOT NULL,
+    order_id UUID NOT NULL ,
     product_id INTEGER NOT NULL,
     product_name VARCHAR(250) NOT NULL,
     quantity INTEGER NOT NULL,

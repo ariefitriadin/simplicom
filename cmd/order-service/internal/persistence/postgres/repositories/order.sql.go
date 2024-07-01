@@ -50,7 +50,7 @@ WHERE o.id = $1
 
 type GetOrdersRow struct {
 	OrderID     uuid.UUID        `json:"orderId"`
-	CustomerID  int32            `json:"customerId"`
+	CustomerID  uuid.UUID        `json:"customerId"`
 	OrderDate   pgtype.Timestamp `json:"orderDate"`
 	Status      string           `json:"status"`
 	Total       pgtype.Numeric   `json:"total"`
@@ -98,7 +98,7 @@ RETURNING id, customer_id, order_date, status, total
 
 type InsertOrderParams struct {
 	ID         uuid.UUID        `json:"id"`
-	CustomerID int32            `json:"customerId"`
+	CustomerID uuid.UUID        `json:"customerId"`
 	OrderDate  pgtype.Timestamp `json:"orderDate"`
 	Status     string           `json:"status"`
 	Total      pgtype.Numeric   `json:"total"`
@@ -106,7 +106,7 @@ type InsertOrderParams struct {
 
 type InsertOrderRow struct {
 	ID         uuid.UUID        `json:"id"`
-	CustomerID int32            `json:"customerId"`
+	CustomerID uuid.UUID        `json:"customerId"`
 	OrderDate  pgtype.Timestamp `json:"orderDate"`
 	Status     string           `json:"status"`
 	Total      pgtype.Numeric   `json:"total"`
@@ -132,19 +132,21 @@ func (q *Queries) InsertOrder(ctx context.Context, arg InsertOrderParams) (Inser
 }
 
 const insertOrderItem = `-- name: InsertOrderItem :exec
-INSERT INTO order_items (order_id, product_id, quantity, price)
+INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
 SELECT 
     unnest($1::uuid[]), 
     unnest($2::int[]), 
-    unnest($3::int[]), 
-    unnest($4::numeric[])
+    unnest($3::text[]),
+    unnest($4::int[]), 
+    unnest($5::numeric[])
 `
 
 type InsertOrderItemParams struct {
 	Column1 []uuid.UUID      `json:"column1"`
 	Column2 []int32          `json:"column2"`
-	Column3 []int32          `json:"column3"`
-	Column4 []pgtype.Numeric `json:"column4"`
+	Column3 []string         `json:"column3"`
+	Column4 []int32          `json:"column4"`
+	Column5 []pgtype.Numeric `json:"column5"`
 }
 
 func (q *Queries) InsertOrderItem(ctx context.Context, arg InsertOrderItemParams) error {
@@ -153,6 +155,7 @@ func (q *Queries) InsertOrderItem(ctx context.Context, arg InsertOrderItemParams
 		arg.Column2,
 		arg.Column3,
 		arg.Column4,
+		arg.Column5,
 	)
 	return err
 }
@@ -172,7 +175,7 @@ type UpdateOrderParams struct {
 
 type UpdateOrderRow struct {
 	ID         uuid.UUID        `json:"id"`
-	CustomerID int32            `json:"customerId"`
+	CustomerID uuid.UUID        `json:"customerId"`
 	OrderDate  pgtype.Timestamp `json:"orderDate"`
 	Status     string           `json:"status"`
 	Total      pgtype.Numeric   `json:"total"`
@@ -197,12 +200,14 @@ WITH updates AS (
         unnest($1::uuid[]) AS id,
         unnest($2::uuid[]) AS order_id,
         unnest($3::int[]) AS product_id,
-        unnest($4::int[]) AS quantity,
-        unnest($5::numeric[]) AS price
+        unnest($4::text[]) AS product_name,
+        unnest($5::int[]) AS quantity,
+        unnest($6::numeric[]) AS price
 )
 UPDATE order_items oi
 SET 
     product_id = u.product_id,
+    product_name = u.product_name,
     quantity = u.quantity,
     price = u.price
 FROM updates u
@@ -213,8 +218,9 @@ type UpdateOrderItemsParams struct {
 	Column1 []uuid.UUID      `json:"column1"`
 	Column2 []uuid.UUID      `json:"column2"`
 	Column3 []int32          `json:"column3"`
-	Column4 []int32          `json:"column4"`
-	Column5 []pgtype.Numeric `json:"column5"`
+	Column4 []string         `json:"column4"`
+	Column5 []int32          `json:"column5"`
+	Column6 []pgtype.Numeric `json:"column6"`
 }
 
 func (q *Queries) UpdateOrderItems(ctx context.Context, arg UpdateOrderItemsParams) error {
@@ -224,6 +230,7 @@ func (q *Queries) UpdateOrderItems(ctx context.Context, arg UpdateOrderItemsPara
 		arg.Column3,
 		arg.Column4,
 		arg.Column5,
+		arg.Column6,
 	)
 	return err
 }
