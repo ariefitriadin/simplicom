@@ -24,5 +24,11 @@ The repository will be updated daily until it can be used as a reference for the
 
 
 ### Reference:
-Article: https://medium.com/@jamalludin.sutomo/saga-pattern-dengan-golang-dan-temporal-42e72337a4a2
+- Temporal : https://temporal.io/
+- Saga : https://microservices.io/patterns/data/saga.html
+
+credits to : 
+https://github.com/vardius
+for components and pkg that used by this repo
+
 
