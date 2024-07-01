@@ -10,10 +10,9 @@ Temporal Workflow and Temporal Activity, the services are:
 - orchestrator service
 - Order Service
 - Product Service
-- User Service
-- Payment Service
-- Shipping Service
-- Notification Service
+- Shop Service
+- Warehouse Service
+... tbd
 
 
 Note this repo is still in progress, the main goal is to learn and practice the saga pattern with golang and temporal, 
@@ -27,8 +26,6 @@ The repository will be updated daily until it can be used as a reference for the
 - Temporal : https://temporal.io/
 - Saga : https://microservices.io/patterns/data/saga.html
 
-credits to : 
-https://github.com/vardius
-for components and pkg that used by this repo
+
 
 
