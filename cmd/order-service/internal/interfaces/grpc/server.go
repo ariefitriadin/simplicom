@@ -76,7 +76,7 @@ func (s *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderReq
 	return &proto.CreateOrderResponse{
 		Order: &proto.Order{
 			Id:         order.ID.String(),
-			CustomerId: order.CustomerID.String(),
+			CustomerId: order.CustomerID,
 			OrderDate:  timestamppb.New(order.OrderDate.Time),
 			Status:     order.Status,
 			Total:      orderTotal.Float64,

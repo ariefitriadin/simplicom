@@ -17,8 +17,8 @@ import (
 	"golang.org/x/exp/rand"
 	"google.golang.org/grpc"
 
-	prodgrpc "github.com/ariefitriadin/simplicom/cmd/order-service/internal/interfaces/grpc"
-	prodhttp "github.com/ariefitriadin/simplicom/cmd/order-service/internal/interfaces/http"
+	ordergrpc "github.com/ariefitriadin/simplicom/cmd/order-service/internal/interfaces/grpc"
+	orderhttp "github.com/ariefitriadin/simplicom/cmd/order-service/internal/interfaces/http"
 	proto "github.com/ariefitriadin/simplicom/cmd/order-service/proto"
 )
 
@@ -55,11 +55,11 @@ func main() {
 		},
 	)
 
-	productGrpcServer := prodgrpc.NewServer(container.PersistenceQuery, container.SQL)
+	orderGrpcServer := ordergrpc.NewServer(container.PersistenceQuery, container.SQL)
 
-	proto.RegisterProductServiceServer(grpcServer, productGrpcServer)
+	proto.RegisterOrderServiceServer(grpcServer, orderGrpcServer)
 
-	router := prodhttp.NewRouter(
+	router := orderhttp.NewRouter(
 		container.DB,
 		map[string]*grpc.ClientConn{
 			"auth": container.AuthConn,
@@ -78,7 +78,7 @@ func main() {
 			},
 		),
 		grpcutils.NewAdapter(
-			"gRPC product server",
+			"gRPC order server",
 			fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port),
 			grpcServer,
 		),
