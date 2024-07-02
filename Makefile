@@ -4,9 +4,11 @@ GIT_COMMIT := $(shell git rev-list -1 HEAD)
 DBPATHAUTH := cmd/auth-service/migrations
 DBPRDPATH := cmd/product-service/migrations
 DBORDERPATH := cmd/order-service/migrations
+DBWAREHOUSEPATH := cmd/warehouse-service/migrations
 DATABASE_AUTH=postgres://user:secret@localhost:5432/authdb?sslmode=disable
 DATABASE_PRODUCT=postgres://user:secret@localhost:5432/productdb?sslmode=disable
 DATABASE_ORDER=postgres://user:secret@localhost:5432/orderdb?sslmode=disable
+DATABASE_WAREHOUSE=postgres://user:secret@localhost:5432/warehousedb?sslmode=disable
 
 # HELP
 # This will output the help for each task
@@ -33,6 +35,10 @@ sqlc-order-gen:
 	@echo "Running migrations Order Service"
 	sqlc -f cmd/order-service/internal/app/config/sqlc.yaml generate
 
+sqlc-warehouse-gen:
+	@echo "Running migrations Warehouse Service"
+	sqlc -f cmd/warehouse-service/internal/app/config/sqlc.yaml generate
+
 migration-auth: ## Run migrations Auth Service
 	@echo "Running migrations Auth Service, example: make migration-auth OP=up, or OP=down"
 	dbmate -d cmd/auth-service/migrations -u ${DATABASE_AUTH} ${OP}
@@ -45,6 +51,10 @@ migration-order: ## Run migrations Order Service
 	@echo "Running migrations Order Service, example: make migration-order OP=up, or OP=down"
 	dbmate -d cmd/order-service/migrations -u ${DATABASE_ORDER} ${OP}
 
+migration-warehouse: ## Run migrations Warehouse Service
+	@echo "Running migrations Warehouse Service, example: make migration-warehouse OP=up, or OP=down"
+	dbmate -d cmd/warehouse-service/migrations -u ${DATABASE_WAREHOUSE} ${OP}
+
 newtabprd: ## generate new table  TABLE=create_products_table
 	@echo "generate new table"
 	dbmate -d $(DBPRDPATH) new ${TABLE}
@@ -52,3 +62,7 @@ newtabprd: ## generate new table  TABLE=create_products_table
 newtaborder: ## generate new table  TABLE=create_order_table
 	@echo "generate new table"
 	dbmate -d $(DBORDERPATH) new ${TABLE}
+
+newtabwarehouse: ## generate new table  TABLE=create_warehouse_table
+	@echo "generate new table"
+	dbmate -d $(DBWAREHOUSEPATH) new ${TABLE}

@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package warehouseService;
+option go_package = ".;warehouseService";
+
+import "google/protobuf/timestamp.proto";
+
+service WarehouseService {
+  rpc CreateWarehouse(CreateWarehouseRequest) returns (Warehouse);
+  rpc GetWarehouse(GetWarehouseRequest) returns (Warehouse);
+  rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse);
+  rpc UpdateWarehouse(UpdateWarehouseRequest) returns (Warehouse);
+  rpc DeleteWarehouse(DeleteWarehouseRequest) returns (DeleteWarehouseResponse);
+
+  rpc AddStock(AddStockRequest) returns (StockResponse);
+  rpc GetStock(GetStockRequest) returns (StockResponse);
+  rpc ReserveStock(ReserveStockRequest) returns (ReservationResponse);
+  rpc ConfirmReservation(ConfirmReservationRequest) returns (ConfirmationResponse);
+  rpc CancelReservation(CancelReservationRequest) returns (CancellationResponse);
+  rpc GetStockHistory(GetStockHistoryRequest) returns (StockHistoryResponse);
+}
+
+message Warehouse {
+  string id = 1;
+  string name = 2;
+  string location_id = 3;
+  string location = 4;
+  int32 capacity = 5;
+}
+
+message CreateWarehouseRequest {
+  string name = 1;
+  string location_id = 2;
+  string location = 3;
+  int32 capacity = 4;
+}
+
+message GetWarehouseRequest {
+  string id = 1;
+}
+
+message ListWarehousesRequest {
+  int32 page_size = 1;
+  int32 page_number = 2;
+}
+
+message ListWarehousesResponse {
+  repeated Warehouse warehouses = 1;
+  int32 total_count = 2;
+}
+
+message UpdateWarehouseRequest {
+  string id = 1;
+  string name = 2;
+  string location_id = 3;
+  string location = 4;
+  int32 capacity = 5;
+}
+
+message DeleteWarehouseRequest {
+  string id = 1;
+}
+
+message DeleteWarehouseResponse {
+  bool success = 1;
+}
+
+message Stock {
+  string id = 1;
+  string warehouse_id = 2;
+  string product_id = 3;
+  int32 available_quantity = 4;
+  int32 reserved_quantity = 5;
+}
+
+message AddStockRequest {
+  string warehouse_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message StockResponse {
+  Stock stock = 1;
+}
+
+message GetStockRequest {
+  string warehouse_id = 1;
+  string product_id = 2;
+}
+
+message ReserveStockRequest {
+  string warehouse_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+  string order_id = 4;
+}
+
+message ReservationResponse {
+  string reservation_id = 1;
+  Stock updated_stock = 2;
+}
+
+message ConfirmReservationRequest {
+  string reservation_id = 1;
+  string order_id = 2;
+}
+
+message ConfirmationResponse {
+  bool success = 1;
+  Stock updated_stock = 2;
+}
+
+message CancelReservationRequest {
+  string reservation_id = 1;
+  string order_id = 2;
+}
+
+message CancellationResponse {
+  bool success = 1;
+  Stock updated_stock = 2;
+}
+
+message StockHistoryEntry {
+  string id = 1;
+  string warehouse_id = 2;
+  string product_id = 3;
+  int32 quantity_change = 4;
+  string operation_type = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message GetStockHistoryRequest {
+  string warehouse_id = 1;
+  string product_id = 2;
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+  int32 page_size = 5;
+  int32 page_number = 6;
+}
+
+message StockHistoryResponse {
+  repeated StockHistoryEntry entries = 1;
+  int32 total_count = 2;
+}
