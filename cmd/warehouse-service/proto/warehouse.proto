@@ -96,8 +96,7 @@ message ReserveStockRequest {
 }
 
 message ReservationResponse {
-  string reservation_id = 1;
-  Stock updated_stock = 2;
+  google.protobuf.Timestamp expires_at = 1;
 }
 
 message ConfirmReservationRequest {
